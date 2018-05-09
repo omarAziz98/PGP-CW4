@@ -1,79 +1,161 @@
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.io.InputStream;
 
-public class BoardSquareButton extends JButton{
-        int x;
-        int y;
-        boolean Mine;
-        boolean Investigated;
-        boolean PotentialMine;
-    public BoardSquareButton(int width, int height, Color color){
-        setMinimumSize(new Dimension(15,15));
-        setPreferredSize(new Dimension(50,50));
+
+public class BoardSquareButton extends JButton {
+    boolean mine = false;
+    boolean investigated = false;
+    boolean potentialMine = false;
+    Board board;
+    int bX, bY;
+
+    public BoardSquareButton(int width, int height, Color color, int x, int y, Board board) {
+        bX = x;
+        bY = y;
+        setMinimumSize(new Dimension(15, 15));
+        setPreferredSize(new Dimension(width, height));
+        this.board = board;
+
+        addMouseListener(new MouseAdapter() {
+                             @Override
+                             public void mouseClicked(MouseEvent e) {
+                                 if ((e.getButton() == MouseEvent.BUTTON3) && (potentialMine == false)) {
+                                     potentialMine = true;
+                                     board.boardSquareButtons[bX][bY].setText("F");
+                                     board.boardSquareButtons[bX][bY].setBackground(Color.ORANGE);
+                                 }else if ((e.getButton() == MouseEvent.BUTTON3) && (potentialMine == true)){
+                                     potentialMine = false;
+                                     board.boardSquareButtons[bX][bY].setText("?");
+                                     board.boardSquareButtons[bX][bY].setBackground(Color.gray);
+                                 }
+                             }
+                         });
+
+                addActionListener(new ActionListener() {
+                    @Override
+                    public void actionPerformed(ActionEvent e) {
+
+                        if (mine) {
+                            setText("M");
+                            setBackground(Color.RED);
+                            for (int i = 0; i < 10; i++) {
+                                for (int j = 0; j < 10; j++) {
+                                    if (board.boardSquareButtons[i][j].mine) {
+                                        board.boardSquareButtons[i][j].setText("M");
+                                        board.boardSquareButtons[i][j].setBackground(Color.RED);
+
+
+                                    }
+
+                                }
+
+                            }
+                            JOptionPane.showMessageDialog(null, "Game Over");
+                            new PsyobaMain();
+
+                        }
+                        if ((!mine) && (board.countSurrounding(bX, bY) > 0) && (!investigated)) {
+                            setBackground(Color.GREEN);
+                            setText(board.countSurrounding(bX, bY) + "");
+                        }
+                        else if ((!mine) && (board.countSurrounding(bX, bY) == 0) && (!investigated)) {
+                            recursiveShow();
+                        }
+                        investigated=true;
+                        boolean hasWon = true;
+                        for (int i = 0; i < 10; i++) {
+                            for (int j = 0; j < 10; j++) {
+                                if ((!board.boardSquareButtons[i][j].investigated) &&(!board.boardSquareButtons[i][j].mine)) {
+                                    hasWon = false;
+
+                                }
+
+                            }
+
+                        }
+
+                        if (hasWon){
+                            JOptionPane.showMessageDialog(null, "You Won");
+                            new PsyobaMain();
+                        }
+
+
+                    }
+
+                });
 
     }
 
-    @Override
-    public int getX() {
-        return x;
+    public void recursiveShow(){
+        if ((!mine)  && (!investigated) ) {
+            setBackground(Color.GREEN);
+            setText(board.countSurrounding(bX, bY) + "");
+            investigated=true;
+            for (int i = Math.max(bX - 1, 0); i < Math.min(bX + 2, board.width); i++) {
+                for (int j = Math.max(bY - 1, 0); j < Math.min(bY + 2, board.height); j++) {
+                    if (!board.boardSquareButtons[i][j].mine) {
+                        board.boardSquareButtons[i][j].setText(board.countSurrounding(i, j) + "");
+                        if(board.countSurrounding(i, j)==0){
+                            board.boardSquareButtons[i][j].recursiveShow();
+                        }else{
+                            board.boardSquareButtons[i][j].investigated=true;
+                        }
+
+
+                    }
+
+
+                }
+
+            }
+        }
+
     }
 
-    public void setX(int x) {
-        this.x = x;
+    public boolean getMine() {
+        return mine;
     }
 
-    public int getY(){
-        return y;
+    public void setMine() {
+        this.mine = mine;
     }
 
-    public void setY(){
-        this.y = y;
+    public boolean getInvestigated() {
+        return investigated;
     }
 
-    public boolean getMine(){
-        return Mine;
+    public void setInvestigated() {
+        this.investigated = investigated;
     }
 
-    public void setMine(){
-        this.Mine = Mine;
-    }
-    public boolean getInvestigated(){
-        return Investigated;
+    public boolean getPotentialMine() {
+        return potentialMine;
     }
 
-    public void setInvestigated(){
-        this.Investigated = Investigated;
-    }
-    public boolean getPotentialMine(){
-        return PotentialMine;
-    }
-
-    public void setPotentialMine(){
-        this.PotentialMine = PotentialMine;
+    public void setPotentialMine() {
+        this.potentialMine = potentialMine;
     }
 
 
-
-
-
-
-    public void setup(Color color){
+    public void setup(Color color) {
         setFont(new Font("Helvetica", Font.PLAIN, 30));
-        if (color != null){
+        setText("?");
+        if (color != null) {
             setBackground(color);
-        }else{
+        } else {
             setBackground(Color.gray);
         }
-        Investigated = false;
-        Mine = false;
-        PotentialMine = false;
-
-
+        investigated = false;
+        mine = false;
+        potentialMine = false;
 
 
     }
-
 
 
 }
